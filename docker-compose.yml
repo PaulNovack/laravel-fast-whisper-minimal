@@ -11,14 +11,41 @@ services:
             # If you use your ASR service:
             # ASR_URL: http://asr:9000
             # If you prefer to inject APP_KEY here instead of .env:
-            # APP_KEY: base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=
+            APP_KEY: base64:eBsC2QDEBJFQCtBAWVt9uyjgZ9hopi0chy+x1Qks0Jw=
         volumes:
-            - ./.env:/var/www/html/.env:ro
-            - ./storage:/var/www/html/storage
-            - ./bootstrap/cache:/var/www/html/bootstrap/cache
+        - ./.env:/var/www/html/.env:ro
+        - ./storage:/var/www/html/storage
+        - ./bootstrap/cache:/var/www/html/bootstrap/cache
+        - ./database:/var/www/html/database        # <-- add this
         ports:
             - "8000:8000"
         restart: unless-stopped
+        command: >
+            sh -lc "
+              # make sure the sqlite file exists
+              mkdir -p database &&
+              [ -f database/database.sqlite ] || touch database/database.sqlite &&
+
+              # laravel needs write on these paths (for sqlite journals, caches, etc.)
+              chown -R www-data:www-data storage bootstrap/cache database || true &&
+              chmod -R ug+rwX storage bootstrap/cache database || true &&
+
+              # optional: ensure app key
+              php artisan key:generate --force || true &&
+
+              # create sessions table if you plan to use DB sessions
+              php artisan session:table || true &&
+
+              # run migrations
+              php artisan migrate --force &&
+
+              # start supervisor
+              exec /usr/bin/supervisord -n
+              sh -lc "
+              php artisan key:generate --force || true &&
+              php artisan migrate --force &&
+              exec /usr/bin/supervisord -n
+            "
         # depends_on:
         #   - asr
     asr:
