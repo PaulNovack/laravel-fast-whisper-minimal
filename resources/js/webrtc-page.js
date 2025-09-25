@@ -122,7 +122,7 @@ export async function startContinuousUtterances({
         }
 
         // Pace loop ~ vadFpsMs
-        const delay = Math.max(0, vadFpsMs - (performance.now() - lastCheck));
+        //const delay = Math.max(0, vadFpsMs - (performance.now() - lastCheck));
         lastCheck = performance.now();
         rafId = requestAnimationFrame(loop);
     };
