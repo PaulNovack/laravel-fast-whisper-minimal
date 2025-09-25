@@ -92,23 +92,6 @@ Response:
 
 ---
 
-## 🗂 Project Structure
-
-```
-├── app/Http/Controllers/TranscribeController.php   # Handles uploads, forwards to ASR
-├── routes/api.php                                  # API routes
-├── frontend/                                       # Vue 3 + Vite frontend
-├── asr/
-│   ├── server.py                                   # FastAPI server for Faster-Whisper
-│   ├── requirements.txt                            # Python dependencies
-│   └── Dockerfile                                  # Python ASR Docker image
-├── Dockerfile.app                                  # Laravel + PHP-FPM + Nginx image
-├── docker-compose.yml
-└── README.md
-```
-
----
-
 ## 📝 Logs & Debugging
 
 Tail Laravel logs:
