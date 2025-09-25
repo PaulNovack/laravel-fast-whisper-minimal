@@ -106,22 +106,6 @@ docker logs -f asr-service
 
 ---
 
-## ⚠️ Common Issues
-
-- **`cURL error 56: connection reset by peer`**  
-  Make sure you’re using `ASR_URL=http://asr:9000` (not `localhost:9000`).
-
-- **SQLite readonly errors**  
-  Fix permissions:
-  ```bash
-  sudo chown -R $(id -u):$(id -g) storage bootstrap/cache
-  chmod -R 775 storage bootstrap/cache
-  ```
-
-- **`python-multipart` missing**  
-  Ensure `python-multipart` is listed in `asr/requirements.txt`.
-
----
 
 ## 🧰 Tech Stack
 - PHP 8.3 / Laravel 12
