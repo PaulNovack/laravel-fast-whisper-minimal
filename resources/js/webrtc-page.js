@@ -18,7 +18,7 @@ export async function startContinuousUtterances({
                                                     mimeTypeCandidates = ['audio/webm;codecs=opus','audio/webm','audio/mp4'],
 
                                                     // VAD params (adaptive)
-                                                    vadFpsMs = 16,                // ~RAF period
+                                                    //vadFpsMs = 16,                // ~RAF period
                                                     vadWarmupMs = 400,            // collect baseline before judging
                                                     marginDb = 6,                 // speech threshold over noise floor
                                                     hysteresisDb = 3,             // how much below threshold to consider "off"
@@ -68,7 +68,7 @@ export async function startContinuousUtterances({
 
     let inSpeech = false;
     let lastSpeechAt = performance.now();
-    let lastCheck = performance.now();
+    //let lastCheck = performance.now();
 
     const loop = async () => {
         analyser.getByteTimeDomainData(buf);
@@ -123,7 +123,7 @@ export async function startContinuousUtterances({
 
         // Pace loop ~ vadFpsMs
         //const delay = Math.max(0, vadFpsMs - (performance.now() - lastCheck));
-        lastCheck = performance.now();
+        //lastCheck = performance.now();
         rafId = requestAnimationFrame(loop);
     };
 
