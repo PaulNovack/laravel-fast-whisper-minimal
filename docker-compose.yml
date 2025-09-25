@@ -1,0 +1,41 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile.app
+        container_name: laravel-app
+        environment:
+            APP_ENV: local
+            APP_DEBUG: "true"
+            APP_URL: http://localhost:8000
+            # If you use your ASR service:
+            # ASR_URL: http://asr:9000
+            # If you prefer to inject APP_KEY here instead of .env:
+            # APP_KEY: base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=
+        volumes:
+            - ./.env:/var/www/html/.env:ro
+            - ./storage:/var/www/html/storage
+            - ./bootstrap/cache:/var/www/html/bootstrap/cache
+        ports:
+            - "8000:8000"
+        restart: unless-stopped
+        # depends_on:
+        #   - asr
+    asr:
+        build:
+            context: ./asr-service            # directory with server.py, requirements.txt, Dockerfile (below)
+            dockerfile: Dockerfile
+        container_name: asr-service
+        environment:
+            ASR_MODEL: small                  # tiny | base | small | medium | large-v3
+            ASR_DEVICE: cpu                   # cpu | cuda  (needs NVIDIA runtime for cuda)
+            ASR_COMPUTE: int8                 # int8 | int8_float32 | float16 | float32
+            ASR_LANG: en
+        ports:
+            - "9000:9000"                     # expose for local curl tests (optional)
+        healthcheck:
+            test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9000/health"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
