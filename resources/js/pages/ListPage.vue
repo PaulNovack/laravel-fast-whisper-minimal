@@ -2,9 +2,80 @@
     <section class="mx-auto max-w-3xl space-y-6">
         <header class="space-y-1">
             <h1 class="text-3xl font-bold">Your List</h1>
-            <p class="text-gray-600 dark:text-gray-300">Add, remove, or clear items by text or audio.</p>
+            <p class="text-gray-600 dark:text-gray-300">Add, remove, or clear items by text or voice.</p>
         </header>
 
+
+        <!-- LIST -->
+        <div class="rounded-2xl border border-gray-200 p-4 shadow-sm dark:border-gray-800">
+            <p v-if="heard" class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                Heard: <span class="font-medium text-gray-700 dark:text-gray-200">{{ heard }}</span>
+            </p>
+            <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Items ({{ items.length }})</h2>
+                <button
+                    class="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    @click="clearList"
+                >
+                    Clear list
+                </button>
+            </div>
+
+            <div v-if="items.length === 0" class="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                No items yet. Try <span class="font-medium">add 2 tomatoe sauce</span>.
+            </div>
+
+            <ul v-else class="divide-y divide-gray-200 rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+                <li v-for="it in items" :key="it" class="flex items-center justify-between px-4 py-3">
+                    <span class="text-[16px]">{{ it }}</span>
+                    <button
+                        class="rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-200 dark:hover:bg-rose-900/40"
+                        @click="removeItem(it)"
+                    >
+                        Remove
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <!-- AUTO-VOICE (VAD) -->
+        <div class="rounded-2xl border border-gray-200 p-4 shadow-sm dark:border-gray-800">
+            <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Auto-voice (VAD)</h2>
+                <div class="flex items-center gap-2">
+                    <button
+                        class="touch-target rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
+                        :disabled="active"
+                        @click="startVad"
+                    >Start</button>
+                    <button
+                        class="touch-target rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500 disabled:opacity-50"
+                        :disabled="!active"
+                        @click="stopVad"
+                    >Stop</button>
+                </div>
+            </div>
+
+            <!-- Level meter -->
+            <div class="mt-2">
+                <div class="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                    Level: {{ levelDb.toFixed(1) }} dB
+                </div>
+                <div class="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-800">
+                    <div
+                        class="h-2 rounded-full bg-indigo-500 transition-[width]"
+                        :style="{ width: `${Math.max(0, Math.min(100, ((levelDb + 90) / 90) * 100)).toFixed(0)}%` }"
+                    />
+                </div>
+            </div>
+
+            <p v-if="vadError" class="mt-3 text-sm text-red-600">{{ vadError }}</p>
+
+            <!-- Compact log -->
+            <div class="mt-3 max-h-28 overflow-auto rounded-lg border border-gray-200 p-2 text-xs font-mono text-gray-600 dark:border-gray-800 dark:text-gray-300">
+                <div v-if="vadLogs.length === 0" class="opacity-60">VAD idle. Click Start and speak; pausing will auto-send.</div>
+                <div v-for="(l,i) in vadLogs" :key="i">{{ l }}</div>
+            </div>
+        </div>
         <!-- TEXT COMMAND -->
         <div class="rounded-2xl border border-gray-200 p-4 shadow-sm dark:border-gray-800">
             <h2 class="mb-3 text-lg font-semibold">Text command</h2>
@@ -24,17 +95,12 @@
                 </button>
             </form>
 
-            <p v-if="heard" class="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                Heard: <span class="font-medium text-gray-700 dark:text-gray-200">{{ heard }}</span>
-            </p>
 
             <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
         </div>
-
-        <!-- AUDIO COMMAND -->
+        <!-- AUDIO (UPLOAD + MANUAL RECORD) -->
         <div class="rounded-2xl border border-gray-200 p-4 shadow-sm dark:border-gray-800">
             <h2 class="mb-3 text-lg font-semibold">Audio command</h2>
-
             <div class="grid gap-3 sm:grid-cols-2">
                 <!-- Upload -->
                 <div class="rounded-xl border border-gray-200 p-3 dark:border-gray-800">
@@ -55,7 +121,7 @@
                     </button>
                 </div>
 
-                <!-- Record -->
+                <!-- Manual record -->
                 <div class="rounded-xl border border-gray-200 p-3 dark:border-gray-800">
                     <p class="mb-2 text-sm text-gray-600 dark:text-gray-300">Record a quick command</p>
                     <div class="flex items-center gap-2">
@@ -94,38 +160,13 @@
             <p v-if="errorAudio" class="mt-3 text-sm text-red-600">{{ errorAudio }}</p>
         </div>
 
-        <!-- LIST -->
-        <div class="rounded-2xl border border-gray-200 p-4 shadow-sm dark:border-gray-800">
-            <div class="mb-3 flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Items ({{ items.length }})</h2>
-                <button
-                    class="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                    @click="clearList"
-                >
-                    Clear list
-                </button>
-            </div>
 
-            <div v-if="items.length === 0" class="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                No items yet. Try <span class="font-medium">add 2 tomatoe sauce</span>.
-            </div>
-
-            <ul v-else class="divide-y divide-gray-200 rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
-                <li v-for="it in items" :key="it" class="flex items-center justify-between px-4 py-3">
-                    <span class="text-[16px]">{{ it }}</span>
-                    <button
-                        class="rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-200 dark:hover:bg-rose-900/40"
-                        @click="removeItem(it)"
-                    >
-                        Remove
-                    </button>
-                </li>
-            </ul>
-        </div>
     </section>
 </template>
 
 <script setup lang="ts">
+// If your alias '@' is not set to '/resources/js', change this import to a relative path.
+import { useVad } from '@/composables/useVad'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 type FromTextResp = { heard?: string; action: string; items: string[] }
@@ -143,11 +184,11 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
 const errorAudio = ref<string>('')
 
-// CSRF helper (Laravel)
-const csrf = () => (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
+// ---- Helpers ----
+const csrf = () =>
+    (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
 
 async function loadItems() {
-    // harmless way to get current session list
     await sendTextCommand('noop', { suppressHeard: true })
 }
 
@@ -165,14 +206,12 @@ async function sendTextCommand(text: string, opts: { suppressHeard?: boolean } =
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrf(),
-                'Accept': 'application/json',
+                Accept: 'application/json',
             },
             body: JSON.stringify({ text }),
             credentials: 'same-origin',
         })
-        if (!res.ok) {
-            throw new Error(`${res.status} ${res.statusText}`)
-        }
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
         const json = (await res.json()) as FromTextResp
         items.value = json.items || []
         if (!opts.suppressHeard) heard.value = json.heard || text
@@ -183,7 +222,6 @@ async function sendTextCommand(text: string, opts: { suppressHeard?: boolean } =
     }
 }
 
-// ---- AUDIO (upload or record) ----
 function uploadSelected(e: Event) {
     const t = e.target as HTMLInputElement
     selectedFile.value = t.files?.[0] ?? null
@@ -191,8 +229,7 @@ function uploadSelected(e: Event) {
 
 async function sendFile() {
     if (!selectedFile.value) return
-    await sendAudioBlob(selectedFile.value)
-    // reset input
+    await sendAudioBlob(selectedFile.value, selectedFile.value.type)
     if (fileInput.value) fileInput.value.value = ''
     selectedFile.value = null
 }
@@ -207,12 +244,12 @@ async function sendAudioBlob(blob: Blob, mimeOverride?: string) {
     loadingAudio.value = true
     try {
         const fd = new FormData()
-        const fname = `command.${mimeOverride?.includes('webm') ? 'webm' : (mimeOverride?.includes('ogg') ? 'ogg' : 'wav')}`
-        fd.append('audio', blob, fname)
+        const ext = mimeOverride?.includes('webm') ? 'webm' : (mimeOverride?.includes('ogg') ? 'ogg' : 'wav')
+        fd.append('audio', blob, `command.${ext}`)
 
         const res = await fetch('/list/from-audio', {
             method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' },
+            headers: { 'X-CSRF-TOKEN': csrf(), Accept: 'application/json' },
             body: fd,
             credentials: 'same-origin',
         })
@@ -230,7 +267,7 @@ async function sendAudioBlob(blob: Blob, mimeOverride?: string) {
     }
 }
 
-// ---- Recording via MediaRecorder ----
+// ---- Manual MediaRecorder (optional alternative to VAD) ----
 const canRecord = 'MediaRecorder' in window
 const recording = ref(false)
 const recordedChunks: BlobPart[] = []
@@ -276,18 +313,43 @@ async function startRecording() {
         errorAudio.value = e?.message || 'Microphone permission denied'
     }
 }
-
 function stopRecording() {
     if (!rec || rec.state !== 'recording') return
     rec.stop()
 }
 
+// ---- Automatic VAD wiring ----
+const vadPostUrl = '/list/from-audio'
+const { start, stop, active, levelDb, logs: vadLogs, error: vadError } = useVad({
+    postUrl: vadPostUrl,
+    csrfToken: csrf(),
+    onResult: (json) => {
+        items.value = json.items || []
+        heard.value = json.heard || '(audio)'
+    },
+})
+const startVad = () => start()
+const stopVad = () => stop()
+
 onMounted(loadItems)
-onBeforeUnmount(() => { if (recordedUrl.value) URL.revokeObjectURL(recordedUrl.value!) })
+onBeforeUnmount(() => {
+    if (recordedUrl.value) URL.revokeObjectURL(recordedUrl.value!)
+    stopVad()
+})
+
+async function removeItem(it: string) {
+    // pass the exact label; your service handles exact/fuzzy match
+    await sendTextCommand(`remove ${it}`)
+}
+
+async function clearList() {
+    await sendTextCommand('clear list')
+}
 </script>
 
 <style scoped>
 @reference "tailwindcss";
-/* Ensure minimum tap areas on mobile */
+
+/* Larger base size already handled globally, ensure touch areas here */
 .touch-target { min-height: 44px; min-width: 44px; }
 </style>
