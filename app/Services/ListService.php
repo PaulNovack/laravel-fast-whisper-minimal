@@ -121,7 +121,7 @@ class ListService
         }
 
         // ADD (single item only)
-        if (preg_match('/^\s*(add|the|at|i had|they had|i want|That\'s|Give me|ed|yeah|and|plus|include)\s+(.+)$/iu', $raw, $m)) {
+        if (preg_match('/^\s*(add|the|at|i had|they had|it\'s|i want|That\'s|Give me|ed|yeah|and|plus|include)\s+(.+)$/iu', $raw, $m)) {
             $payload = $this->collapseSpaces($this->stripSurroundingQuotes($m[2]));
             $payload = $this->stripLeadingIndefiniteArticle($payload); // "a"/"an" -> qty 1
             if ($payload !== '') $this->add($payload);
