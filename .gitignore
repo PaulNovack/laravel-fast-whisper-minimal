@@ -28,3 +28,4 @@ yarn-error.log
 /.zed
 asr/.venv/lib
 asr/.venv/bin
+asr-service/.venv
