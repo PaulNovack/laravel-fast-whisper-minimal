@@ -121,7 +121,7 @@ class ListService
         }
 
         // ADD (single item only)
-        if (preg_match('/^\s*(add|ed|yeah|and|plus|include)\s+(.+)$/iu', $raw, $m)) {
+        if (preg_match('/^\s*(add|the|i had|i want|Give me|ed|yeah|and|plus|include)\s+(.+)$/iu', $raw, $m)) {
             $payload = $this->collapseSpaces($this->stripSurroundingQuotes($m[2]));
             $payload = $this->stripLeadingIndefiniteArticle($payload); // "a"/"an" -> qty 1
             if ($payload !== '') $this->add($payload);
@@ -129,7 +129,7 @@ class ListService
         }
 
         // REMOVE (supports multiple tokens)
-        if (preg_match('/^\s*(remove|move to|move|removes|delete|minus|drop)\s+(.+)$/iu', $raw, $m)) {
+        if (preg_match('/^\s*(remove|move to|moves|move|removes|delete|minus|drop)\s+(.+)$/iu', $raw, $m)) {
             foreach ($this->splitItems($m[2]) as $p) $this->remove($p);
             return ['action' => 'remove', 'items' => $this->all()];
         }
@@ -230,7 +230,7 @@ class ListService
 
         $num = 0; $acc = 0; $consumed = 0;
         $mapUnits = [
-            'zero'=>0,'one'=>1,'two'=>2,'three'=>3,'four'=>4,'five'=>5,'six'=>6,'seven'=>7,'eight'=>8,'nine'=>9,
+            'zero'=>0,'one'=>1,'two'=>2,'to'=> 2,'three'=>3,'four'=>4,'for' =>4,'five'=>5,'six'=>6,'seven'=>7,'eight'=>8,'nine'=>9,
             'ten'=>10,'eleven'=>11,'twelve'=>12,'thirteen'=>13,'fourteen'=>14,'fifteen'=>15,'sixteen'=>16,'seventeen'=>17,'eighteen'=>18,'nineteen'=>19,
         ];
         $mapTens = ['twenty'=>20,'thirty'=>30,'forty'=>40,'fifty'=>50,'sixty'=>60,'seventy'=>70,'eighty'=>80,'ninety'=>90];
