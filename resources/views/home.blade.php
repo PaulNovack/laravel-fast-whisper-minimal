@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>WebRTC + VAD + Reverb + Faster-Whisper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebRTC + VAD + Faster-Whisper</title>
     @vite(['resources/js/app.ts'])
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>

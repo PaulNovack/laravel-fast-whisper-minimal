@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Larger, fluid base size (mobile > desktop keeps comfy) */
+@layer base {
+    html, body { height: 100%; }
+    /* clamp(min, preferred, max) */
+    html { font-size: clamp(16px, 2.2vw, 18px); }
+    body { @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100; }
+}
+
+/* Optional: ensure minimum tap target */
+@layer utilities {
+    .touch-target { min-height: 44px; min-width: 44px; }
+}
