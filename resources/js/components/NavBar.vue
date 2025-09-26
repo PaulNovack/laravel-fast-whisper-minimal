@@ -5,9 +5,6 @@
             <nav class="flex h-16 items-center justify-between sm:h-16 md:h-16" aria-label="Main">
                 <!-- Brand -->
                 <RouterLink to="/" class="flex items-center gap-2">
-          <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white text-base font-bold shadow-sm sm:h-9 sm:w-9">
-            V
-          </span>
                     <span class="text-[18px] font-semibold tracking-tight sm:text-[16px]">Whisper ASR / VAD Demo</span>
                 </RouterLink>
 
