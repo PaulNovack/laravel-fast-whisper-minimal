@@ -39,11 +39,7 @@ services:
               # run migrations
               php artisan migrate --force &&
 
-              # start supervisor
-              exec /usr/bin/supervisord -n
-              sh -lc "
-              php artisan key:generate --force || true &&
-              php artisan migrate --force &&
+              # finally, start supervisor (keeps container running)
               exec /usr/bin/supervisord -n
             "
         # depends_on:
