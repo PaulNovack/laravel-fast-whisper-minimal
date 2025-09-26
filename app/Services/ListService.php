@@ -26,19 +26,32 @@ class ListService
 
     public function add(string $item): array
     {
+        // Normalize incoming and split into qty + name
         $normalized = $this->normalizeItem($item);
         if ($normalized === '') return $this->all();
 
+        [$incQty, $incName] = $this->splitQtyName($normalized); // default qty=1 if absent
+        $incQty = max(1, (int)$incQty);
+        $incKey = $this->normalizeForMatch($incName);
+
         $items = $this->all();
 
-        if ($this->dedupeCaseInsensitive) {
-            $lower = array_map(fn($i) => mb_strtolower($i), $items);
-            if (in_array(mb_strtolower($normalized), $lower, true)) return $items;
-        } else {
-            if (in_array($normalized, $items, true)) return $items;
+        // Find existing by name (case-insensitive, ignore leading qty)
+        foreach ($items as $idx => $existing) {
+            [$curQty, $curName] = $this->splitQtyName($existing);
+            $curKey = $this->normalizeForMatch($curName);
+
+            if ($curKey === $incKey) {
+                $newQty = max(1, (int)$curQty ?: 1) + $incQty;
+                $items[$idx] = ($newQty > 1) ? ($newQty . ' ' . $curName) : $curName;
+                $this->session->put($this->key, array_values($items));
+                return $items;
+            }
         }
 
-        $items[] = $normalized;
+        // Not found: create new item (show qty only if > 1)
+        $label = ($incQty > 1) ? ($incQty . ' ' . $incName) : $incName;
+        $items[] = $label;
         $this->session->put($this->key, $items);
         return $items;
     }
@@ -55,8 +68,9 @@ class ListService
         $needle = $this->normalizeItem($item);
         if ($needle === '') return $items;
 
-        // exact (case-insensitive) first
         $needleKey = $this->normalizeForMatch($needle);
+
+        // Exact (case-insensitive) first
         foreach ($items as $it) {
             if ($this->normalizeForMatch($it) === $needleKey) {
                 $filtered = array_values(array_filter(
@@ -68,7 +82,7 @@ class ListService
             }
         }
 
-        // fuzzy fallback
+        // Fuzzy fallback
         $bestIdx = $this->findClosestIndex($needleKey, $items);
         if ($bestIdx !== null) {
             unset($items[$bestIdx]);
@@ -80,10 +94,9 @@ class ListService
 
     /**
      * Commands:
-     *  - "add <ANY TEXT…>" → treated as ONE item (no splitting)
+     *  - "add <ANY TEXT…>" → treated as ONE item (no splitting); strips leading "a"/"an"
      *  - "remove a, b and c" → may remove multiple (each fuzzy-matched)
      *  - "clear list" / "delete list" / "new list" → empties list
-     *  - anything else → noop (returns current list)
      */
     public function processCommand(string $text): array
     {
@@ -97,21 +110,17 @@ class ListService
         // ADD (single item only; do NOT split)
         if (preg_match('/^\s*(add|ed|yeah|and|plus|include)\s+(.+)$/iu', $raw, $m)) {
             $payload = $this->collapseSpaces($this->stripSurroundingQuotes($m[2]));
-            if ($payload !== '') {
-                $this->add($payload);   // treat whole payload as one item
-            }
+            $payload = $this->stripLeadingIndefiniteArticle($payload); // strip "a"/"an"
+            if ($payload !== '') $this->add($payload);
             return ['action' => 'add', 'items' => $this->all()];
         }
 
-        // REMOVE (still supports multiple tokens)
+        // REMOVE (supports multiple tokens)
         if (preg_match('/^\s*(remove|move to|move|removes|delete|minus|drop)\s+(.+)$/iu', $raw, $m)) {
-            foreach ($this->splitItems($m[2]) as $p) {
-                $this->remove($p);
-            }
+            foreach ($this->splitItems($m[2]) as $p) $this->remove($p);
             return ['action' => 'remove', 'items' => $this->all()];
         }
 
-        // No-op
         return ['action' => 'noop', 'items' => $this->all()];
     }
 
@@ -124,7 +133,7 @@ class ListService
             preg_match('/^\s*(new|create new|start new)\s+list\s*$/u', $lc);
     }
 
-    // --- helpers ---
+    // ---------- helpers ----------
 
     /** For REMOVE only: split on commas/&/and into multiple tokens */
     private function splitItems(string $s): array
@@ -146,6 +155,12 @@ class ListService
         return $s;
     }
 
+    private function stripLeadingIndefiniteArticle(string $s): string
+    {
+        // Remove leading "a " or "an " (case-insensitive)
+        return preg_replace('/^\s*(a|an)\s+/iu', '', $s) ?? $s;
+    }
+
     private function collapseSpaces(string $s): string
     {
         return preg_replace('/\s+/u', ' ', trim($s)) ?? '';
@@ -157,15 +172,24 @@ class ListService
         if ($s === '') return '';
 
         if (preg_match('/^\s*(\d+)\s+(.*)$/u', $s, $m)) {
-            $qty  = $m[1];
+            $qty  = (int)$m[1];
             $name = $this->cleanName($m[2]);
             $name = $this->titleCaseItems ? $this->toTitle($name) : $name;
-            return $qty . ' ' . $name;
+            return ($qty > 1 ? ($qty . ' ') : '') . $name;
         }
 
         $name = $this->cleanName($s);
         $name = $this->titleCaseItems ? $this->toTitle($name) : $name;
         return $name;
+    }
+
+    /** Split a normalized item into [qty, name]; qty defaults to 1 if absent */
+    private function splitQtyName(string $normalized): array
+    {
+        if (preg_match('/^\s*(\d+)\s+(.*)$/u', $normalized, $m)) {
+            return [max(1, (int)$m[1]), $this->cleanName($m[2])];
+        }
+        return [1, $this->cleanName($normalized)];
     }
 
     private function stripPunctuation(string $s): string
