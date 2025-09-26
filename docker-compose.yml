@@ -7,18 +7,19 @@ services:
         environment:
             APP_ENV: local
             APP_DEBUG: "true"
-            APP_URL: http://localhost:8000
+            APP_URL: http://localhost:8001
             # If you use your ASR service:
             # ASR_URL: http://asr:9000
             # If you prefer to inject APP_KEY here instead of .env:
             APP_KEY: base64:eBsC2QDEBJFQCtBAWVt9uyjgZ9hopi0chy+x1Qks0Jw=
         volumes:
+        - ./:/var/www/html
         - ./.env:/var/www/html/.env:ro
         - ./storage:/var/www/html/storage
         - ./bootstrap/cache:/var/www/html/bootstrap/cache
         - ./database:/var/www/html/database        # <-- add this
         ports:
-            - "8000:8000"
+            - "8001:8001"
         restart: unless-stopped
         command: >
             sh -lc "
