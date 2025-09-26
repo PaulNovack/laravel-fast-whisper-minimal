@@ -5,7 +5,7 @@
             <RouterView />
         </main>
         <footer class="border-t border-gray-200 py-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-            © 2025 Vue Demo
+            Whisper ASR / VAD Demo
         </footer>
     </div>
 </template>

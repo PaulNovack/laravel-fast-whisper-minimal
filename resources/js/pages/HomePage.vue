@@ -46,8 +46,9 @@ function stop() {
         <h1 class="text-2xl font-bold">Speak, pause, transcribe</h1>
 
         <div class="flex gap-3">
-            <button class="px-4 py-2 rounded bg-black text-white" @click="start">Start</button>
-            <button class="px-4 py-2 rounded bg-gray-200" @click="stop">Stop</button>
+            <button class="touch-target rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
+                   @click="start">Start</button>
+            <button class="touch-target rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500 disabled:opacity-50" @click="stop">Stop</button>
         </div>
 
         <div>
