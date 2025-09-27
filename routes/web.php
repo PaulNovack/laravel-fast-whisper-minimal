@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 
 Route::view('/', 'home');
 
+Route::view('list', 'home');
+
 Route::post('/audio/chunk', function (Request $request) {
 
     $path = storage_path('app/public/chunks');
