@@ -3,15 +3,13 @@
 namespace App\Services;
 
 use Illuminate\Contracts\Session\Session;
-use Illuminate\Support\Facades\Log;
 
-class ListService
+class SynonymService
 {
     public function __construct(
         private readonly Session $session,
         private readonly string $key = 'user.list.items',
         private readonly bool $titleCaseItems = true,
-        private readonly bool $dedupeCaseInsensitive = true
     ) {}
 
     public function all(): array
@@ -29,9 +27,6 @@ class ListService
 
     public function add(string $item): array
     {
-        // Pre-normalize ASR quirks (pieces -> Pizzas) BEFORE anything else
-        $item = $this->preNormalize($item);
-
         // Parse qty (digits or words) + name
         [$incQty, $incName] = $this->parseQtyAndName($item);
         if ($incName === '') return $this->all();
@@ -68,9 +63,6 @@ class ListService
      */
     public function remove(string $item): array
     {
-        // Pre-normalize BEFORE anything else
-        $item = $this->preNormalize($item);
-
         $items = $this->all();
         if (empty($items)) return $items;
 
@@ -120,8 +112,7 @@ class ListService
      */
     public function processCommand(string $text): array
     {
-        // Pre-normalize BEFORE anything else
-        $raw = $this->preNormalize(trim($text ?? ''));
+        $raw = trim($text ?? '');
 
         // CLEAR
         if ($this->isClearCommand($raw)) {
@@ -129,7 +120,7 @@ class ListService
         }
 
         // ADD (single item only)
-        if (preg_match('/^\s*(i want|i want Some|yeah|add|and|the|at|have a|i had|they had|it\'s|i want|That\'s|Give me|i want|ed|yeah|and|plus|include)\s+(.+)$/iu', $raw, $m)) {
+        if (preg_match('/^\s*(add|the|at|i had|they had|it\'s|i want|That\'s|Give me|ed|yeah|and|plus|include)\s+(.+)$/iu', $raw, $m)) {
             $payload = $this->collapseSpaces($this->stripSurroundingQuotes($m[2]));
             $payload = $this->stripLeadingIndefiniteArticle($payload); // "a"/"an" -> qty 1
             if ($payload !== '') $this->add($payload);
@@ -137,7 +128,7 @@ class ListService
         }
 
         // REMOVE (supports multiple tokens)
-        if (preg_match('/^\s*(remove|proof|move to|moves|move|removes|delete|minus|drop)\s+(.+)$/iu', $raw, $m)) {
+        if (preg_match('/^\s*(remove|move to|moves|move|removes|delete|minus|drop|cancel)\s+(.+)$/iu', $raw, $m)) {
             foreach ($this->splitItems($m[2]) as $p) $this->remove($p);
             return ['action' => 'remove', 'items' => $this->all()];
         }
@@ -151,52 +142,11 @@ class ListService
         return
             preg_match('/^\s*(clear|reset)\s*(list)?\s*[.?]?\s*$/u', $lc) ||
             preg_match('/^\s*(delete|wipe|erase)\s+list\s*[.?]?\s*$/u', $lc) ||
-            preg_match('/^\s*(new|create new|clearless|start new|clear)\s+list\s*[.?]?\s*$/u', $lc);
+            preg_match('/^\s*(new|create new|start new|clear)\s+list\s*[.?]?\s*$/u', $lc);
     }
 
-    // ----------------------- PRE-NORMALIZATION -----------------------
-
-    /**
-     * Replace common ASR mis-hearings BEFORE any parsing.
-     * - "pieces" -> "Pizzas"
-     * - "piece"  -> "Pizza"
-     */
-    private function preNormalize(string $s): string
-    {
-        if ($s === '') return $s;
-        //Log::info($s);
-        // Order matters: do plurals first, then singulars
-        $patterns = [
-            '/\bpieces\b/iu'   => 'Pizzas', // pieces -> Pizzas
-            '/\bdangles\b/iu'  => 'bagels', // dangles -> bagels
-            '/\bpiece\b/iu'    => 'Pizza',  // piece  -> Pizza
-            '/\bdangle\b/iu'   => 'bagel',  // dangle -> bagel
-            '/\bscarlet\b/iu'  => 'garlic', // scarlet -> garlic
-            '/\bnuts\b/iu'  => 'knots', // nuts -> knots
-            '/\spread sticks\b/iu'  => 'breadsticks', // spread sticks -> breadsticks
-            '/\clearlist\b/iu'  => 'clear', // spread sticks -> breadsticks
-            '/\docter\b/iu'  => 'dr.', // spread sticks -> breadsticks
-            '/\carats\b/iu'  => 'carrots', // spread sticks -> breadsticks
-            '/\sticks\b/iu'  => 'steaks', // spread sticks -> breadsticks
-            '/\schizzers\b/iu'  => 'gizzards', // spread sticks -> breadsticks
-            '/\fillet Of fish\b/iu'  => 'McFish', // spread sticks -> breadsticks
-            '/\walker\b/iu'  => 'whopper', // spread sticks -> breadsticks
-            '/\walkers\b/iu'  => 'whopper', // spread sticks -> breadsticks
-            '/\bacon Eater\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\bakingator\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking Error\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking area\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking air\b/iu'  => 'Baconator', // spread sticks -> breadsticks
-            '/\baking error\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking int the air\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking interview\b/iu'  => 'baconator', // spread sticks -> breadsticks
 
 
-
-        ];
-
-        return preg_replace(array_keys($patterns), array_values($patterns), $s) ?? $s;
-    }
     // ----------------------- NAME/QTY NORMALIZATION -----------------------
 
     /** Parse qty (digits or number-words or a/an) + cleaned name. */
