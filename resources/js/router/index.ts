@@ -9,8 +9,8 @@ const routes: Array<RouteRecordRaw> = [
         component: HomePage,
     },
     {
-        path: '/about',
-        name: 'About',
+        path: '/List',
+        name: 'List',
         component: AboutPage,
     },
 ]

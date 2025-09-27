@@ -142,7 +142,7 @@ class ListService
         }
 
         // ADD (noisy ASR prefixes)
-        if (preg_match('/^\s*(Need to give me some|you need to give me some|i want|yeah|add|could have|could i have|ad|and|add me|the|at|have a|i had|they had|had|it\'s|that\'s|give me|ed|plus|include)\s+(.+)$/iu', $raw, $m)) {
+        if (preg_match('/^\s*(Need to give me some|as|you need to give me some|and|i want|yeah|add|could have|could i have|ad|and|add me|the|at|have a|i had|they had|had|it\'s|that\'s|give me|ed|plus|include)\s+(.+)$/iu', $raw, $m)) {
             $payload = $this->collapseSpaces($this->stripSurroundingQuotes($m[2]));
             $payload = $this->stripLeadingIndefiniteArticle($payload); // "a"/"an" -> qty 1
             if ($payload !== '') $this->add($payload);
@@ -204,7 +204,7 @@ class ListService
             '/\baking error\b/iu'  => 'baconator', // spread sticks -> breadsticks
             '/\baking int the air\b/iu'  => 'baconator', // spread sticks -> breadsticks
             '/\baking interview\b/iu'  => 'baconator', // spread sticks -> breadsticks
-
+            '/\beeves\b/iu'  => 'beef', // spread sticks -> breadsticks
 
 
         ];

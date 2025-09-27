@@ -1,7 +1,7 @@
 <template>
-    <section class="mx-auto max-w-3xl space-y-6">
+    <section class="mx-auto max-w-3xl space-y-1">
         <header class="space-y-1">
-            <h1 class="text-3xl font-bold">Your List</h1>
+            <h1 class="text-lg font-bold">Your List</h1>
             <p class="text-gray-600 dark:text-gray-300">Add, remove, or clear items by text or voice.</p>
         </header>
 
@@ -12,7 +12,7 @@
                 Heard: <span class="font-medium text-gray-700 dark:text-gray-200">{{ heard }}</span>
             </p>
             <div class="mb-3 flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Items ({{ items.length }})</h2>
+                <h2 class="text-md font-semibold">Items ({{ items.length }})</h2>
                 <button
                     class="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                     @click="clearList"
@@ -26,10 +26,11 @@
             </div>
 
             <ul v-else class="divide-y divide-gray-200 rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
-                <li v-for="it in items" :key="it" class="flex items-center justify-between px-4 py-3">
+                <li v-for="it in items" :key="it" class="flex items-center justify-between px-1.5 py-1.5">
                     <span class="text-[16px]">{{ it }}</span>
                     <button
-                        class="rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-200 dark:hover:bg-rose-900/40"
+                        class="rounded bg-rose-50 px-1 py-1 text-sm font-medium text-rose-700 transition
+                        hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-200 dark:hover:bg-rose-900/40"
                         @click="removeItem(it)"
                     >
                         Remove
@@ -99,9 +100,9 @@
             <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
         </div>
         <!-- AUDIO (UPLOAD + MANUAL RECORD) -->
-        <div class="rounded-2xl border border-gray-200 p-4 shadow-sm dark:border-gray-800">
+        <div class="rounded-2xl border border-gray-200 p-2 shadow-sm dark:border-gray-800">
             <h2 class="mb-3 text-lg font-semibold">Audio command</h2>
-            <div class="grid gap-3 sm:grid-cols-2">
+            <div class="grid gap-2 sm:grid-cols-2">
                 <!-- Upload -->
                 <div class="rounded-xl border border-gray-200 p-3 dark:border-gray-800">
                     <p class="mb-2 text-sm text-gray-600 dark:text-gray-300">Upload audio file</p>
@@ -352,4 +353,8 @@ async function clearList() {
 
 /* Larger base size already handled globally, ensure touch areas here */
 .touch-target { min-height: 44px; min-width: 44px; }
+button {
+    padding: .1rem .5rem; /* global override */
+}
+
 </style>
