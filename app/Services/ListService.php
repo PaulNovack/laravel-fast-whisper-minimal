@@ -66,7 +66,36 @@ class ListService
      *  - If qty >= current → remove item entirely
      *  - If no exact key match, uses Levenshtein fuzzy fallback
      */
+    public function remove(string $item): array
+    {
+        // Pre-normalize BEFORE anything else
+        $item = $this->preNormalize($item);
 
+        $items = $this->all();
+        if (empty($items)) return $items;
+
+        [$decQty, $needleName] = $this->parseQtyAndName($item, defaultQty: 1);
+        if ($needleName === '') return $items;
+
+        $needleKey = $this->matchKey($needleName);
+
+        // 1) Exact key match first
+        foreach ($items as $idx => $existing) {
+            [$curQty, $curName] = $this->splitQtyName($existing);
+            if ($this->matchKey($curName) === $needleKey) {
+                return $this->applyDecrement($items, $idx, $curQty, $curName, $decQty);
+            }
+        }
+
+        // 2) Fuzzy fallback on key (case-insensitive, singularized)
+        $bestIdx = $this->findClosestIndex($needleKey, $items);
+        if ($bestIdx !== null) {
+            [$curQty, $curName] = $this->splitQtyName($items[$bestIdx]);
+            return $this->applyDecrement($items, $bestIdx, $curQty, $curName, $decQty);
+        }
+
+        return $items;
+    }
 
     private function applyDecrement(array $items, int $idx, int $curQty, string $curName, int $decQty): array
     {
@@ -112,17 +141,11 @@ class ListService
             return ['action' => 'clear', 'items' => $this->clear()];
         }
 
-// ADD (noisy ASR prefixes)
-        if (preg_match('/^\s*(Need to give me some|Give me more|you need to give me some|i want|yeah|add|could have|could i have|ad|and|add me|the|at|have a|i had|they had|had|it\'s|that\'s|give me|ed|plus|include)\s+(.+?)(?:\.+)?\s*$/iu', $raw, $m)) {
-            $payload = $this->collapseSpaces(
-                $this->stripSurroundingQuotes(
-                    rtrim($m[2], ".") // strip trailing periods just in case
-                )
-            );
+        // ADD (noisy ASR prefixes)
+        if (preg_match('/^\s*(Need to give me some|you need to give me some|i want|yeah|add|could have|could i have|ad|and|add me|the|at|have a|i had|they had|had|it\'s|that\'s|give me|ed|plus|include)\s+(.+)$/iu', $raw, $m)) {
+            $payload = $this->collapseSpaces($this->stripSurroundingQuotes($m[2]));
             $payload = $this->stripLeadingIndefiniteArticle($payload); // "a"/"an" -> qty 1
-            if ($payload !== '') {
-                $this->add($payload);
-            }
+            if ($payload !== '') $this->add($payload);
             return ['action' => 'add', 'items' => $this->all()];
         }
 
