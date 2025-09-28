@@ -16,7 +16,7 @@ class AsrService
     public function __construct(){
         $this->route = '/transcribe';
         $this->baseUrl = env('ASR_URL');
-        $this->timeoutSeconds = 10;
+        $this->timeoutSeconds = 60;
     }
 
     /**

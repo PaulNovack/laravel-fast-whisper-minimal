@@ -1,66 +1,25 @@
-# =========================
-# .htaccess for PHP + routing
-# Apache 2.4+ (mod_rewrite, mod_headers, mod_expires)
-# Place in your web root (same dir as index.php)
-# =========================
-
-# 1) Basic hardening
-Options -Indexes
-
-# Deny access to hidden files (.env, .git, etc.) and common sensitive files
-<FilesMatch "(^\.|composer\.(json|lock)|package(-lock)?\.json|yarn\.lock|phpunit\.xml|artisan|webpack\.mix\.js|vite\.config\.(js|ts))">
-  Require all denied
-</FilesMatch>
-
-# 2) Default index
-DirectoryIndex index.php index.html
-
-# 3) Compression & caching (optional but recommended)
-<IfModule mod_expires.c>
-  ExpiresActive On
-  # Cache static assets for a month
-  ExpiresByType image/avif "access plus 1 month"
-  ExpiresByType image/webp "access plus 1 month"
-  ExpiresByType image/png  "access plus 1 month"
-  ExpiresByType image/jpeg "access plus 1 month"
-  ExpiresByType image/gif  "access plus 1 month"
-  ExpiresByType text/css   "access plus 1 month"
-  ExpiresByType application/javascript "access plus 1 month"
-  ExpiresByType application/font-woff2 "access plus 1 month"
-</IfModule>
-
-<IfModule mod_headers.c>
-  # Prevent MIME type sniffing
-  Header always set X-Content-Type-Options "nosniff"
-  # Basic clickjacking protection
-  Header always set X-Frame-Options "SAMEORIGIN"
-  # Basic XSS protection hint (legacy)
-  Header always set X-XSS-Protection "1; mode=block"
-  # Cache busting safety for HTML (avoid caching)
-  <FilesMatch "\.(html|htm|php)$">
-    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
-  </FilesMatch>
-</IfModule>
-
-# 4) Rewrite to index.php (front controller)
 <IfModule mod_rewrite.c>
-  RewriteEngine On
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
 
-  # --- If your site is in a subfolder, set this (uncomment & change):
-  # RewriteBase /subfolder/
+    RewriteEngine On
 
-  # (Optional) Force HTTPS — works behind proxies/CDNs too
-  # Comment this block out if you don’t want forced HTTPS.
-  RewriteCond %{HTTPS} !=on [OR]
-  RewriteCond %{HTTP:X-Forwarded-Proto} !https
-  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-  # Serve existing files/directories as-is…
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
-  # …otherwise route everything to index.php
-  RewriteRule ^ index.php [L]
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
 </IfModule>
-
