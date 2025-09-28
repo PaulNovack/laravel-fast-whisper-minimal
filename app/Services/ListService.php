@@ -142,7 +142,7 @@ class ListService
         }
 
         // ADD (noisy ASR prefixes)
-        if (preg_match('/^\s*(Need to give me some|as|you need to give me some|and|i want|yeah|add|could have|could i have|ad|and|add me|the|at|have a|i had|they had|had|it\'s|that\'s|give me|ed|plus|include)\s+(.+)$/iu', $raw, $m)) {
+        if (preg_match('/^\s*(I would like|an|and an|Need to give me some|as|you need to give me some|and|i want|yeah|add|could have|could i have|ad|add me|the|at|have a|i had|they had|had|it\'s|that\'s|give me|ed|plus|include)\s+(.+)$/iu', $raw, $m)) {
             $payload = $this->collapseSpaces($this->stripSurroundingQuotes($m[2]));
             $payload = $this->stripLeadingIndefiniteArticle($payload); // "a"/"an" -> qty 1
             if ($payload !== '') $this->add($payload);
@@ -186,27 +186,7 @@ class ListService
             '/\bpiece\b/iu'    => 'Pizza',  // piece  -> Pizza
             '/\bdangle\b/iu'   => 'bagel',  // dangle -> bagel
             '/\bscarlet\b/iu'  => 'garlic', // scarlet -> garlic
-            '/\bnuts\b/iu'  => 'knots', // nuts -> knots
             '/\spread sticks\b/iu'  => 'breadsticks', // spread sticks -> breadsticks
-            '/\clearlist\b/iu'  => 'clear', // spread sticks -> breadsticks
-            '/\docter\b/iu'  => 'dr.', // spread sticks -> breadsticks
-            '/\carats\b/iu'  => 'carrots', // spread sticks -> breadsticks
-            '/\sticks\b/iu'  => 'steaks', // spread sticks -> breadsticks
-            '/\schizzers\b/iu'  => 'gizzards', // spread sticks -> breadsticks
-            '/\fillet Of fish\b/iu'  => 'McFish', // spread sticks -> breadsticks
-            '/\walker\b/iu'  => 'whopper', // spread sticks -> breadsticks
-            '/\walkers\b/iu'  => 'whopper', // spread sticks -> breadsticks
-            '/\bacon Eater\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\bakingator\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking Error\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking area\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking air\b/iu'  => 'Baconator', // spread sticks -> breadsticks
-            '/\baking error\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking int the air\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\baking interview\b/iu'  => 'baconator', // spread sticks -> breadsticks
-            '/\beeves\b/iu'  => 'beef', // spread sticks -> breadsticks
-
-
         ];
 
         return preg_replace(array_keys($patterns), array_values($patterns), $s) ?? $s;
